@@ -1,6 +1,9 @@
-// Caches the whole app shell so it works with zero connectivity —
-// there's no API to call anyway, all data lives in localStorage.
-const CACHE_NAME = "nutrition-tracker-v1";
+// Caches the whole app shell for offline use. Network-first: when you have
+// a connection, always fetch the latest version and refresh the cache with
+// it — only fall back to the cached copy when there's genuinely no network.
+// This means updates show up immediately on next open, no manual cache
+// version bump needed each time the app changes.
+const CACHE_NAME = "nutrition-tracker-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -30,6 +33,12 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(event.request)
+      .then((response) => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
