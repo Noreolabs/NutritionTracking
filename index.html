@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nutrition Tracker</title>
+
+<!-- PWA / iOS home screen install -->
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nutrition">
+<meta name="theme-color" content="#14181C">
+<link rel="apple-touch-icon" href="icon-180.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="statusbar">
+    <button id="day-toggle" class="day-pill" title="Tap to switch training/rest">
+      <span id="day-label">—</span>
+      <span id="day-warning" class="day-warning" title="">!</span>
+    </button>
+    <div class="clock" id="clock">—</div>
+  </header>
+
+  <div class="macros" id="macros">
+    <div class="macro"><span class="macro-val" id="m-cal">—</span><span class="macro-lbl">cal</span></div>
+    <div class="macro"><span class="macro-val" id="m-pro">—</span><span class="macro-lbl">protein</span></div>
+    <div class="macro"><span class="macro-val" id="m-carb">—</span><span class="macro-lbl">carbs</span></div>
+    <div class="macro"><span class="macro-val" id="m-fat">—</span><span class="macro-lbl">fat</span></div>
+  </div>
+
+  <div class="next-ticker" id="next-ticker">
+    <span class="next-dot"></span>
+    <span class="next-label">NEXT</span>
+    <span class="next-text" id="next-text">—</span>
+  </div>
+
+  <div class="week-strip" id="week-strip"></div>
+
+  <main class="content">
+    <section>
+      <h2 class="section-title">Today's Diet</h2>
+      <div id="meal-list" class="meal-list"></div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Supplements</h2>
+      <div id="supplement-list" class="supplement-list"></div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Running Low</h2>
+      <div id="grocery-list" class="grocery-list"></div>
+    </section>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
