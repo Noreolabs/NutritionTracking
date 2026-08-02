@@ -25,16 +25,16 @@ const WEEKDAY_SCHEDULE = {
   6: "training", // Saturday
 };
 
-// category: gut_protocol | enzyme | creatine | daily_supp
+// category: gut_protocol | creatine | daily_supp
+// onlyOnDayType (optional): restricts a supplement to just "training" or "rest".
+// Training-day creatine is handled separately, as an Intra-Workout meal item.
 const DAILY_SUPPLEMENTS = [
   { id: "supp-1",  name: "Water", amount: "10 oz", timing: "Morning — first thing, before food", category: "gut_protocol", notes: null, ingredientKey: null },
   { id: "supp-2",  name: "Redmond Re-Lyte electrolytes", amount: "1 serving", timing: "Morning — first thing, before food", category: "gut_protocol", notes: null, ingredientKey: "Redmond Re-Lyte electrolytes" },
   { id: "supp-3",  name: "Aloe vera juice", amount: "3 oz", timing: "Morning — first thing, before food", category: "gut_protocol", notes: null, ingredientKey: "Aloe vera juice (inner filet, sugar-free)" },
   { id: "supp-4",  name: "Glutamine", amount: "10 g", timing: "Morning — first thing, before food", category: "gut_protocol", notes: null, ingredientKey: "Glutamine" },
   { id: "supp-5",  name: "Lemon, squeezed", amount: "1/2 lemon or 1 oz juice", timing: "Morning — first thing, before food", category: "gut_protocol", notes: null, ingredientKey: "Lemon" },
-  { id: "supp-6",  name: "Silver Fern digestive enzyme", amount: "1 serving", timing: "10–15 min before Meal 1", category: "enzyme", notes: "Optional for now — add as food volume climbs", ingredientKey: "Silver Fern digestive enzyme" },
-  { id: "supp-7",  name: "Dr's Best Pepsin GI", amount: "1 serving", timing: "10–15 min before Meal 1", category: "enzyme", notes: "Optional for now — add as food volume climbs", ingredientKey: "Dr's Best Pepsin GI" },
-  { id: "supp-8",  name: "Creatine", amount: "10 g", timing: "Training: intra-workout shake / Rest: morning protocol or Meal 1", category: "creatine", notes: "Does not get skipped, even on rest days", ingredientKey: "Creatine" },
+  { id: "supp-8",  name: "Creatine", amount: "10 g", timing: "Morning — first thing, before food", category: "creatine", notes: "Rest day only — on training days it's in the Intra-Workout shake instead", ingredientKey: "Creatine", onlyOnDayType: "rest" },
   { id: "supp-9",  name: "Fish oil", amount: "1 serving", timing: "With Meal 2", category: "daily_supp", notes: null, ingredientKey: "Fish oil" },
   { id: "supp-10", name: "Vitamin D", amount: "1 serving", timing: "With Meal 2", category: "daily_supp", notes: null, ingredientKey: "Vitamin D" },
   { id: "supp-11", name: "Vitamin K", amount: "1 serving", timing: "With Meal 2", category: "daily_supp", notes: null, ingredientKey: "Vitamin K" },
@@ -76,8 +76,6 @@ const INGREDIENT_INFO = {
   "Aloe vera juice (inner filet, sugar-free)": { unit: "oz", category: "liquid" },
   "Glutamine": { unit: "g", category: "supplement" },
   "Lemon": { unit: "each", category: "produce" },
-  "Silver Fern digestive enzyme": { unit: "serving", category: "supplement" },
-  "Dr's Best Pepsin GI": { unit: "serving", category: "supplement" },
   "Fish oil": { unit: "serving", category: "supplement" },
   "Vitamin D": { unit: "serving", category: "supplement" },
   "Vitamin K": { unit: "serving", category: "supplement" },
@@ -102,7 +100,7 @@ const MEALS = [
     item("Natural peanut butter", "15 g"),
     item("Organic cinnamon", "1/2 tsp", null, "insulin sensitivity"),
   ]},
-  { id: "training-2", dayType: "training", name: "Meal 2", time: "11:30 AM", items: [
+  { id: "training-2", dayType: "training", name: "Meal 2", time: "11:30 AM", supplementReminder: "With Meal 2", items: [
     item("Liquid egg whites", "250 g"),
     item("Omega-3 whole eggs", "2 eggs"),
     item("Red or yukon potato", "400 g", null, "cooked, or plain hash browns"),
@@ -141,7 +139,7 @@ const MEALS = [
     item("Natural peanut butter", "20 g"),
     item("Organic cinnamon", "1/2 tsp"),
   ]},
-  { id: "rest-2", dayType: "rest", name: "Meal 2", time: "11:30 AM", items: [
+  { id: "rest-2", dayType: "rest", name: "Meal 2", time: "11:30 AM", supplementReminder: "With Meal 2", items: [
     item("Liquid egg whites", "250 g"),
     item("Omega-3 whole eggs", "3 eggs"),
     item("Red or yukon potato", "250 g", null, "cooked, or plain hash browns"),

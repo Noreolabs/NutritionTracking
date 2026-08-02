@@ -82,7 +82,7 @@ body {
 .macros {
   display: flex;
   justify-content: space-around;
-  padding: 4px 16px 14px;
+  padding: 4px 0 14px;
 }
 .macro { display: flex; flex-direction: column; align-items: center; }
 .macro-val { font-family: var(--font-mono); font-size: 20px; font-weight: 600; }
@@ -93,7 +93,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 16px 14px;
+  margin: 0 0 14px;
   background: var(--panel-alt);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -121,7 +121,7 @@ body {
 .week-strip {
   display: flex;
   gap: 8px;
-  padding: 0 16px 18px;
+  padding: 0 0 18px;
   overflow-x: auto;
 }
 .week-day {
@@ -154,7 +154,9 @@ body {
 .week-day.override .override-dot { display: block; }
 
 /* ── Content sections ──────────────────────────────────────────── */
-.content { padding: 0 16px 40px; }
+.content { padding: 0 16px calc(72px + env(safe-area-inset-bottom)); }
+.page { display: none; }
+.page.active { display: block; }
 section { margin-bottom: 28px; }
 .section-title {
   font-family: var(--font-mono);
@@ -164,6 +166,57 @@ section { margin-bottom: 28px; }
   text-transform: uppercase;
   color: var(--text-muted);
   margin-bottom: 12px;
+}
+
+/* ── Bottom tab nav ────────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 20px;
+  padding: 10px 0 8px;
+}
+.bottom-nav button span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.bottom-nav button.active { color: var(--accent-next); }
+.bottom-nav button.active span { color: var(--accent-next); }
+
+/* ── Meal 2 supplement callout ─────────────────────────────────── */
+.supp-callout {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(91,141,239,0.1);
+  border: 1px solid var(--accent-training);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+.supp-callout-link {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-training);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* ── Meals ─────────────────────────────────────────────────────── */

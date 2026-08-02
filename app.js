@@ -160,7 +160,7 @@ function renderAll() {
   renderStatusBar(dayType, scheduled, targets, meals);
   renderWeekStrip();
   renderMeals(meals);
-  renderSupplements();
+  renderSupplements(dayType);
   renderGroceries();
 }
 
@@ -260,10 +260,24 @@ function renderMeals(meals) {
     }
     row.appendChild(itemsWrap);
 
+    if (meal.supplementReminder) {
+      const reminderSupps = DAILY_SUPPLEMENTS.filter(s => s.timing === meal.supplementReminder);
+      if (reminderSupps.length) {
+        const callout = document.createElement("div");
+        callout.className = "supp-callout";
+        callout.innerHTML = `💊 Also take: ${reminderSupps.map(s => s.name).join(", ")} <span class="supp-callout-link">→ Supplements</span>`;
+        callout.addEventListener("click", (e) => {
+          e.stopPropagation();
+          switchPage("supplements");
+        });
+        itemsWrap.appendChild(callout);
+      }
+    }
+
     // Tap the header again to expand/collapse a non-active meal — fixes the
     // kiosk-era gap where only the active meal's ingredients were reachable.
     row.addEventListener("click", (e) => {
-      if (e.target.closest(".flag-low")) return;
+      if (e.target.closest(".flag-low") || e.target.closest(".supp-callout")) return;
       if (isActive) return; // active meal's tap already toggles completion
       row.classList.toggle("expanded");
     });
@@ -272,10 +286,11 @@ function renderMeals(meals) {
   }
 }
 
-function renderSupplements() {
+function renderSupplements(dayType) {
   const container = document.getElementById("supplement-list");
   container.innerHTML = "";
-  const groups = groupBy(DAILY_SUPPLEMENTS, s => s.timing);
+  const visible = DAILY_SUPPLEMENTS.filter(s => !s.onlyOnDayType || s.onlyOnDayType === dayType);
+  const groups = groupBy(visible, s => s.timing);
   for (const [timing, items] of groups) {
     const groupEl = document.createElement("div");
     groupEl.className = "supp-group";
@@ -285,14 +300,12 @@ function renderSupplements() {
       const low = s.ingredientKey ? isLowStock(s.ingredientKey) : false;
       const row = document.createElement("div");
       row.className = "supp-row" + (completed ? " done" : "");
-      const asNeededTag = s.category === "enzyme" ? '<span class="supp-badge">as needed</span>' : "";
       const flagBtn = s.ingredientKey
         ? `<button class="flag-low${low ? " active" : ""}" title="Mark running low">⚠</button>`
         : '<span class="flag-low-spacer"></span>';
       row.innerHTML = `
         <span class="supp-check"></span>
         <span class="supp-name">${s.name}</span>
-        ${asNeededTag}
         <span class="supp-amount">${s.amount || ""}</span>
         ${flagBtn}
       `;
@@ -342,6 +355,16 @@ document.getElementById("day-toggle").addEventListener("click", () => {
   const current = getDayType();
   setDayType(current === "training" ? "rest" : "training");
   renderAll();
+});
+
+// ── Page navigation (bottom tab bar) ─────────────────────────────
+function switchPage(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "page-" + page));
+  document.querySelectorAll(".bottom-nav button").forEach(b => b.classList.toggle("active", b.dataset.page === page));
+}
+
+document.querySelectorAll(".bottom-nav button").forEach(btn => {
+  btn.addEventListener("click", () => switchPage(btn.dataset.page));
 });
 
 // ── Init ────────────────────────────────────────────────────────

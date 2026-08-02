@@ -27,37 +27,49 @@
     <div class="clock" id="clock">—</div>
   </header>
 
-  <div class="macros" id="macros">
-    <div class="macro"><span class="macro-val" id="m-cal">—</span><span class="macro-lbl">cal</span></div>
-    <div class="macro"><span class="macro-val" id="m-pro">—</span><span class="macro-lbl">protein</span></div>
-    <div class="macro"><span class="macro-val" id="m-carb">—</span><span class="macro-lbl">carbs</span></div>
-    <div class="macro"><span class="macro-val" id="m-fat">—</span><span class="macro-lbl">fat</span></div>
-  </div>
-
-  <div class="next-ticker" id="next-ticker">
-    <span class="next-dot"></span>
-    <span class="next-label">NEXT</span>
-    <span class="next-text" id="next-text">—</span>
-  </div>
-
-  <div class="week-strip" id="week-strip"></div>
-
   <main class="content">
-    <section>
-      <h2 class="section-title">Today's Diet</h2>
-      <div id="meal-list" class="meal-list"></div>
-    </section>
+    <div id="page-diet" class="page active">
+      <div class="macros" id="macros">
+        <div class="macro"><span class="macro-val" id="m-cal">—</span><span class="macro-lbl">cal</span></div>
+        <div class="macro"><span class="macro-val" id="m-pro">—</span><span class="macro-lbl">protein</span></div>
+        <div class="macro"><span class="macro-val" id="m-carb">—</span><span class="macro-lbl">carbs</span></div>
+        <div class="macro"><span class="macro-val" id="m-fat">—</span><span class="macro-lbl">fat</span></div>
+      </div>
 
-    <section>
-      <h2 class="section-title">Supplements</h2>
-      <div id="supplement-list" class="supplement-list"></div>
-    </section>
+      <div class="next-ticker" id="next-ticker">
+        <span class="next-dot"></span>
+        <span class="next-label">NEXT</span>
+        <span class="next-text" id="next-text">—</span>
+      </div>
 
-    <section>
-      <h2 class="section-title">Running Low</h2>
-      <div id="grocery-list" class="grocery-list"></div>
-    </section>
+      <div class="week-strip" id="week-strip"></div>
+
+      <section>
+        <h2 class="section-title">Today's Diet</h2>
+        <div id="meal-list" class="meal-list"></div>
+      </section>
+    </div>
+
+    <div id="page-supplements" class="page">
+      <section>
+        <h2 class="section-title">Supplements</h2>
+        <div id="supplement-list" class="supplement-list"></div>
+      </section>
+    </div>
+
+    <div id="page-groceries" class="page">
+      <section>
+        <h2 class="section-title">Running Low</h2>
+        <div id="grocery-list" class="grocery-list"></div>
+      </section>
+    </div>
   </main>
+
+  <nav class="bottom-nav">
+    <button data-page="diet" class="active">🍽<span>Diet</span></button>
+    <button data-page="supplements">💊<span>Supplements</span></button>
+    <button data-page="groceries">🛒<span>Running Low</span></button>
+  </nav>
 
   <script src="data.js"></script>
   <script src="app.js"></script>
