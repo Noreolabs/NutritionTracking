@@ -9,7 +9,7 @@
  */
 
 const DAY_TARGETS = {
-  training: { calories: 3350, protein_g: 250, carbs_g: 420, fat_g: 50 },
+  training: { calories: 3800, protein_g: 255, carbs_g: 490, fat_g: 65 },
   rest:     { calories: 2525, protein_g: 250, carbs_g: 230, fat_g: 60 },
 };
 
@@ -97,7 +97,7 @@ const MEALS = [
     item("Whey isolate", "1.5 servings", null, "37.5g protein"),
     item("Oats (Bob's Red Mill)", "85 g"),
     item("Frozen strawberries", "150 g"),
-    item("Natural peanut butter", "15 g"),
+    item("Natural peanut butter", "30 g"),
     item("Organic cinnamon", "1/2 tsp", null, "insulin sensitivity"),
   ]},
   { id: "training-2", dayType: "training", name: "Meal 2", time: "11:30 AM", supplementReminder: "With Meal 2", items: [
@@ -107,8 +107,8 @@ const MEALS = [
   ]},
   { id: "training-3", dayType: "training", name: "Meal 3", time: "2:00 PM", items: [
     item("Ground beef 93% lean (grass fed)", "6 oz", null, "cooked"),
-    item("Red or yukon potato", "200 g", 1, "cooked"),
-    item("Jasmine rice", "130 g", 1, "cooked"),
+    item("Red or yukon potato", "280 g", 1, "cooked"),
+    item("Jasmine rice", "200 g", 1, "cooked"),
     item("Dark green veggies", "100 g"),
     item("Kimchi", "1 serving", null, "optional"),
   ]},
@@ -116,7 +116,7 @@ const MEALS = [
     item("Whey isolate", "2 servings", null, "50g protein"),
     item("Caramel rice cakes", "7 cakes", 1),
     item("Cream of rice", "90 g", 1, "dry"),
-    item("Natural peanut butter", "15 g"),
+    item("Natural peanut butter", "30 g"),
   ]},
   { id: "training-5", dayType: "training", name: "Intra-Workout", time: "sip 10 min prior, drink throughout", items: [
     item("EAAs", "1 serving"),
@@ -128,8 +128,8 @@ const MEALS = [
     item("Chicken breast", "7 oz", 1, "cooked"),
     item("Ground turkey", "7 oz", 1, "cooked"),
     item("Jasmine rice", "320 g", null, "cooked"),
-    item("Dates (medjool)", "60 g", 2, "~3 medjool"),
-    item("Pineapple", "150 g", 2),
+    item("Dates (medjool)", "120 g", 2, "~6 medjool"),
+    item("Pineapple", "300 g", 2),
   ]},
   // ── Rest day ──
   { id: "rest-1", dayType: "rest", name: "Meal 1", time: "9:00 AM", items: [
