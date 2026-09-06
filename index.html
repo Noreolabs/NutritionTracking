@@ -63,12 +63,27 @@
         <div id="grocery-list" class="grocery-list"></div>
       </section>
     </div>
+
+    <div id="page-settings" class="page">
+      <section>
+        <h2 class="section-title">Edit Plan</h2>
+        <div class="settings-daytype" id="settings-daytype"></div>
+        <div class="settings-weekday-label" id="settings-weekday-label"></div>
+
+        <div class="settings-targets" id="settings-targets"></div>
+
+        <button class="reset-all-btn" id="reset-all-btn">Reset all edits for this day</button>
+
+        <div id="settings-meal-list" class="meal-list"></div>
+      </section>
+    </div>
   </main>
 
   <nav class="bottom-nav">
     <button data-page="diet" class="active">🍽<span>Diet</span></button>
     <button data-page="supplements">💊<span>Supplements</span></button>
     <button data-page="groceries">🛒<span>Running Low</span></button>
+    <button data-page="settings">⚙️<span>Edit Plan</span></button>
   </nav>
 
   <script src="data.js"></script>

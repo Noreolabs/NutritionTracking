@@ -8,18 +8,23 @@ const STORAGE_KEY = "nutritionState";
 
 // ── State load/save ──────────────────────────────────────────────
 function loadState() {
+  const empty = { dayTypeOverrides: {}, completions: {}, lowStock: {}, planEdits: { mealItems: {}, targets: {} } };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { dayTypeOverrides: {}, completions: {}, lowStock: {} };
+    if (!raw) return empty;
     const parsed = JSON.parse(raw);
     return {
       dayTypeOverrides: parsed.dayTypeOverrides || {},
       completions: parsed.completions || {},
       lowStock: parsed.lowStock || {},
+      planEdits: {
+        mealItems: (parsed.planEdits && parsed.planEdits.mealItems) || {},
+        targets: (parsed.planEdits && parsed.planEdits.targets) || {},
+      },
     };
   } catch (err) {
     console.error("Failed to load state, starting fresh", err);
-    return { dayTypeOverrides: {}, completions: {}, lowStock: {} };
+    return empty;
   }
 }
 
@@ -35,6 +40,16 @@ function todayStr(d) {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+// Parsing a plain "YYYY-MM-DD" string with `new Date(str)` interprets it as
+// UTC midnight, not local midnight — in any timezone behind UTC (all of the
+// US), that silently rolls back to the previous day. This parses it using
+// local date components instead, so round-tripping through todayStr() always
+// lands on the same calendar day it started as.
+function parseLocalDateStr(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 
 // ── Day type (weekly schedule + per-date override) ────────────────
@@ -85,6 +100,78 @@ function getGroceryList() {
     .filter(name => STATE.lowStock[name])
     .map(name => ({ name, ...(INGREDIENT_INFO[name] || {}) }))
     .sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.name.localeCompare(b.name));
+}
+
+// ── Plan edits ─────────────────────────────────────────────────────
+// data.js is the "official" plan — it's what gets replaced wholesale when
+// a new coach PDF comes in. This layer lets you tweak amounts/targets
+// yourself in the app without touching that file. Edits are keyed by
+// WEEKDAY (0=Sun..6=Sat, matching Date.getDay()) + mealId + ingredient,
+// so you can customize just Mondays and Tuesdays, say, and leave every
+// other day running the standard plan.
+function mealItemKey(weekday, mealId, ingredientName) {
+  return weekday + "::" + mealId + "::" + ingredientName;
+}
+
+function getMealItemEdit(weekday, mealId, ingredientName) {
+  return STATE.planEdits.mealItems[mealItemKey(weekday, mealId, ingredientName)];
+}
+
+function setMealItemEdit(weekday, mealId, ingredientName, amount) {
+  STATE.planEdits.mealItems[mealItemKey(weekday, mealId, ingredientName)] = amount;
+  saveState(STATE);
+}
+
+function clearMealItemEdit(weekday, mealId, ingredientName) {
+  delete STATE.planEdits.mealItems[mealItemKey(weekday, mealId, ingredientName)];
+  saveState(STATE);
+}
+
+function getTargetEdits(weekday) {
+  return STATE.planEdits.targets[weekday] || {};
+}
+
+function setTargetEdit(weekday, field, value) {
+  if (!STATE.planEdits.targets[weekday]) STATE.planEdits.targets[weekday] = {};
+  STATE.planEdits.targets[weekday][field] = value;
+  saveState(STATE);
+}
+
+function clearTargetEdit(weekday, field) {
+  if (STATE.planEdits.targets[weekday]) delete STATE.planEdits.targets[weekday][field];
+  saveState(STATE);
+}
+
+function resetAllPlanEdits(weekday) {
+  delete STATE.planEdits.targets[weekday];
+  const prefix = weekday + "::";
+  for (const key of Object.keys(STATE.planEdits.mealItems)) {
+    if (key.startsWith(prefix)) delete STATE.planEdits.mealItems[key];
+  }
+  saveState(STATE);
+}
+
+function weekdayHasEdits(weekday) {
+  if (STATE.planEdits.targets[weekday] && Object.keys(STATE.planEdits.targets[weekday]).length) return true;
+  const prefix = weekday + "::";
+  return Object.keys(STATE.planEdits.mealItems).some(k => k.startsWith(prefix));
+}
+
+// Returns meals for this day type with any edits for this specific
+// weekday applied — this is what the rest of the app should render,
+// not mealsForDayType() directly, so edits show up everywhere.
+function getEffectiveMeals(dayType, weekday) {
+  return mealsForDayType(dayType).map(meal => ({
+    ...meal,
+    items: meal.items.map(it => {
+      const edit = getMealItemEdit(weekday, meal.id, it.name);
+      return edit !== undefined ? { ...it, amount: edit } : it;
+    }),
+  }));
+}
+
+function getEffectiveTargets(dayType, weekday) {
+  return { ...DAY_TARGETS[dayType], ...getTargetEdits(weekday) };
 }
 
 // ── Week overview (for the swap strip) ────────────────────────────
@@ -151,20 +238,28 @@ function groupBy(list, keyFn) {
 }
 
 // ── Rendering ────────────────────────────────────────────────────
-function renderAll() {
-  const dayType = getDayType();
-  const scheduled = getScheduledDayType();
-  const targets = DAY_TARGETS[dayType];
-  const meals = mealsForDayType(dayType);
+// viewingDate lets you tap any day in the week strip to see/edit that
+// day's plan without waiting for it to actually arrive. Resets to today
+// on reload — it's a navigation choice, not saved state.
+let viewingDate = new Date();
 
-  renderStatusBar(dayType, scheduled, targets, meals);
+function renderAll() {
+  const dayType = getDayType(viewingDate);
+  const scheduled = getScheduledDayType(viewingDate);
+  const weekday = viewingDate.getDay();
+  const targets = getEffectiveTargets(dayType, weekday);
+  const meals = getEffectiveMeals(dayType, weekday);
+  const isToday = todayStr(viewingDate) === todayStr(new Date());
+
+  renderStatusBar(dayType, scheduled, targets, meals, isToday);
   renderWeekStrip();
   renderMeals(meals);
   renderSupplements(dayType);
   renderGroceries();
+  renderSettings();
 }
 
-function renderStatusBar(dayType, scheduled, targets, meals) {
+function renderStatusBar(dayType, scheduled, targets, meals, isToday) {
   const label = document.getElementById("day-label");
   label.textContent = dayType.toUpperCase() + " DAY";
   document.getElementById("day-toggle").className = "day-pill " + dayType;
@@ -179,10 +274,20 @@ function renderStatusBar(dayType, scheduled, targets, meals) {
   document.getElementById("m-carb").textContent = targets.carbs_g + "g";
   document.getElementById("m-fat").textContent = targets.fat_g + "g";
 
-  const nextMeal = meals.find(m => !isCompleted(m.id));
   const nextText = document.getElementById("next-text");
   const ticker = document.getElementById("next-ticker");
   const nextLabel = ticker.querySelector(".next-label");
+
+  if (!isToday) {
+    // Countdown/overdue math doesn't mean anything for a day that isn't
+    // actually happening right now — show what you're looking at instead.
+    ticker.classList.remove("complete");
+    nextLabel.textContent = "VIEWING";
+    nextText.textContent = viewingDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+    return;
+  }
+
+  const nextMeal = meals.find(m => !isCompleted(m.id, viewingDate));
   if (!nextMeal) {
     ticker.classList.add("complete");
     nextLabel.textContent = "STATUS";
@@ -198,16 +303,17 @@ function renderStatusBar(dayType, scheduled, targets, meals) {
 function renderWeekStrip() {
   const container = document.getElementById("week-strip");
   container.innerHTML = "";
+  const viewingKey = todayStr(viewingDate);
   for (const day of getWeekOverview()) {
     const el = document.createElement("div");
-    el.className = `week-day ${day.dayType}` + (day.isToday ? " today" : "") + (day.isOverride ? " override" : "");
+    const isViewing = day.date === viewingKey;
+    el.className = `week-day ${day.dayType}` + (day.isToday ? " today" : "") + (day.isOverride ? " override" : "") + (isViewing ? " viewing" : "");
     el.title = day.isOverride
-      ? `${day.weekday}: ${day.dayType} (normally ${day.scheduledDayType}) — tap to swap back`
-      : `${day.weekday}: ${day.dayType} — tap to swap`;
+      ? `${day.weekday}: ${day.dayType} (normally ${day.scheduledDayType}) — tap to view`
+      : `${day.weekday}: ${day.dayType} — tap to view`;
     el.innerHTML = `${day.weekday.slice(0, 2).toUpperCase()}<span class="override-dot"></span>`;
     el.addEventListener("click", () => {
-      const next = day.dayType === "training" ? "rest" : "training";
-      setDayType(next, new Date(day.date));
+      viewingDate = parseLocalDateStr(day.date);
       renderAll();
     });
     container.appendChild(el);
@@ -217,10 +323,10 @@ function renderWeekStrip() {
 function renderMeals(meals) {
   const container = document.getElementById("meal-list");
   container.innerHTML = "";
-  const activeMeal = meals.find(m => !isCompleted(m.id));
+  const activeMeal = meals.find(m => !isCompleted(m.id, viewingDate));
 
   for (const meal of meals) {
-    const completed = isCompleted(meal.id);
+    const completed = isCompleted(meal.id, viewingDate);
     const isActive = activeMeal && meal.id === activeMeal.id;
     const row = document.createElement("div");
     row.className = "meal-row" + (completed ? " done" : "") + (isActive ? " active" : "");
@@ -233,7 +339,7 @@ function renderMeals(meals) {
       <span class="meal-time">${meal.time || ""}</span>
     `;
     header.addEventListener("click", () => {
-      setCompleted(meal.id, !completed);
+      setCompleted(meal.id, !completed, viewingDate);
       renderAll();
     });
     row.appendChild(header);
@@ -296,7 +402,7 @@ function renderSupplements(dayType) {
     groupEl.className = "supp-group";
     groupEl.innerHTML = `<div class="supp-group-label">${timing}</div>`;
     for (const s of items) {
-      const completed = isCompleted(s.id);
+      const completed = isCompleted(s.id, viewingDate);
       const low = s.ingredientKey ? isLowStock(s.ingredientKey) : false;
       const row = document.createElement("div");
       row.className = "supp-row" + (completed ? " done" : "");
@@ -310,7 +416,7 @@ function renderSupplements(dayType) {
         ${flagBtn}
       `;
       row.addEventListener("click", () => {
-        setCompleted(s.id, !completed);
+        setCompleted(s.id, !completed, viewingDate);
         renderAll();
       });
       const flagEl = row.querySelector(".flag-low");
@@ -350,10 +456,119 @@ function renderGroceries() {
   }
 }
 
+// ── Settings / in-app plan editor ─────────────────────────────────
+// Which weekday's plan is being edited — independent of viewingDate, and
+// independent of day TYPE, since the whole point is letting e.g. Monday
+// and Tuesday diverge from the standard training-day plan while every
+// other training day stays as-is. Defaults to today's weekday.
+let settingsWeekday = null;
+
+const TARGET_FIELDS = [
+  { key: "calories", label: "Calories" },
+  { key: "protein_g", label: "Protein (g)" },
+  { key: "carbs_g", label: "Carbs (g)" },
+  { key: "fat_g", label: "Fat (g)" },
+];
+
+const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Mon..Sun, values match Date.getDay()
+const WEEKDAY_SHORT = { 0: "SU", 1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR", 6: "SA" };
+const WEEKDAY_FULL = { 0: "Sunday", 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday" };
+
+function renderSettings() {
+  if (settingsWeekday === null) settingsWeekday = new Date().getDay();
+  const settingsDT = WEEKDAY_SCHEDULE[settingsWeekday];
+
+  const daytypeContainer = document.getElementById("settings-daytype");
+  daytypeContainer.innerHTML = "";
+  for (const wd of WEEKDAY_ORDER) {
+    const btn = document.createElement("button");
+    btn.className = "settings-weekday-btn " + WEEKDAY_SCHEDULE[wd] + (wd === settingsWeekday ? " active" : "");
+    btn.innerHTML = WEEKDAY_SHORT[wd] + (weekdayHasEdits(wd) ? '<span class="edit-dot"></span>' : "");
+    btn.title = WEEKDAY_FULL[wd] + " — " + WEEKDAY_SCHEDULE[wd];
+    btn.addEventListener("click", () => {
+      settingsWeekday = wd;
+      renderAll();
+    });
+    daytypeContainer.appendChild(btn);
+  }
+
+  document.getElementById("settings-weekday-label").textContent =
+    `Editing ${WEEKDAY_FULL[settingsWeekday]} — ${settingsDT === "training" ? "Training Day" : "Rest Day"} plan`;
+
+  const effectiveTargets = getEffectiveTargets(settingsDT, settingsWeekday);
+  const targetEdits = getTargetEdits(settingsWeekday);
+  const targetsContainer = document.getElementById("settings-targets");
+  targetsContainer.innerHTML = "";
+  for (const f of TARGET_FIELDS) {
+    const isEdited = targetEdits[f.key] !== undefined;
+    const row = document.createElement("div");
+    row.className = "settings-target-row";
+    row.innerHTML = `
+      <label>${f.label}</label>
+      <input type="number" inputmode="numeric" value="${effectiveTargets[f.key]}">
+      <button class="reset-field-btn${isEdited ? " show" : ""}" title="Reset to plan default">↺</button>
+    `;
+    const input = row.querySelector("input");
+    input.addEventListener("change", () => {
+      const val = parseInt(input.value, 10);
+      if (!isNaN(val)) {
+        setTargetEdit(settingsWeekday, f.key, val);
+        renderAll();
+      }
+    });
+    row.querySelector(".reset-field-btn").addEventListener("click", () => {
+      clearTargetEdit(settingsWeekday, f.key);
+      renderAll();
+    });
+    targetsContainer.appendChild(row);
+  }
+
+  const mealListContainer = document.getElementById("settings-meal-list");
+  mealListContainer.innerHTML = "";
+  for (const meal of mealsForDayType(settingsDT)) {
+    const row = document.createElement("div");
+    row.className = "meal-row expanded";
+    row.innerHTML = `<div class="meal-header"><span class="meal-name">${meal.name}</span><span class="meal-time">${meal.time || ""}</span></div>`;
+
+    const itemsWrap = document.createElement("div");
+    itemsWrap.className = "meal-items";
+    for (const it of meal.items) {
+      const edit = getMealItemEdit(settingsWeekday, meal.id, it.name);
+      const currentAmount = edit !== undefined ? edit : it.amount;
+      const line = document.createElement("div");
+      line.className = "meal-item settings-item";
+      line.innerHTML = `
+        <span class="item-name">${it.name}</span>
+        <input type="text" class="amount-input" value="${currentAmount}">
+        <button class="reset-field-btn${edit !== undefined ? " show" : ""}" title="Reset to plan default">↺</button>
+      `;
+      const input = line.querySelector("input");
+      input.addEventListener("change", () => {
+        setMealItemEdit(settingsWeekday, meal.id, it.name, input.value);
+        renderAll();
+      });
+      line.querySelector(".reset-field-btn").addEventListener("click", () => {
+        clearMealItemEdit(settingsWeekday, meal.id, it.name);
+        renderAll();
+      });
+      itemsWrap.appendChild(line);
+    }
+    row.appendChild(itemsWrap);
+    mealListContainer.appendChild(row);
+  }
+}
+
+document.getElementById("reset-all-btn").addEventListener("click", () => {
+  if (confirm(`Reset all your edits for ${WEEKDAY_FULL[settingsWeekday]} back to the plan defaults?`)) {
+    resetAllPlanEdits(settingsWeekday);
+    renderAll();
+  }
+});
+
 // ── Day pill click ──────────────────────────────────────────────
 document.getElementById("day-toggle").addEventListener("click", () => {
-  const current = getDayType();
-  setDayType(current === "training" ? "rest" : "training");
+  const current = getDayType(viewingDate);
+  setDayType(current === "training" ? "rest" : "training", viewingDate);
   renderAll();
 });
 

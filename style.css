@@ -130,9 +130,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
@@ -142,6 +142,11 @@ body {
 .week-day.training { background: var(--accent-training); }
 .week-day.rest { background: var(--accent-rest); }
 .week-day.today { border-color: var(--text); }
+.week-day.viewing {
+  border-color: var(--accent-next);
+  box-shadow: 0 0 0 2px var(--accent-next);
+  filter: brightness(1.2);
+}
 .week-day .override-dot {
   position: absolute;
   top: -3px; right: -3px;
@@ -198,6 +203,109 @@ section { margin-bottom: 28px; }
 }
 .bottom-nav button.active { color: var(--accent-next); }
 .bottom-nav button.active span { color: var(--accent-next); }
+
+/* ── Settings / Edit Plan page ─────────────────────────────────── */
+.settings-daytype {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.settings-weekday-btn {
+  position: relative;
+  flex: 1;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bg);
+}
+.settings-weekday-btn.training { background: var(--accent-training); }
+.settings-weekday-btn.rest { background: var(--accent-rest); }
+.settings-weekday-btn.active { border-color: var(--text); }
+.settings-weekday-btn .edit-dot {
+  position: absolute;
+  top: -3px; right: -3px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--accent-next);
+  border: 1.5px solid var(--bg);
+}
+.settings-weekday-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.settings-targets {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px 14px;
+  margin-bottom: 16px;
+}
+.settings-target-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.settings-target-row:last-child { border-bottom: none; }
+.settings-target-row label { flex: 1; font-size: 14px; color: var(--text); }
+.settings-target-row input {
+  width: 80px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 6px 8px;
+  text-align: right;
+}
+
+.amount-input {
+  width: 118px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 8px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.settings-item .item-name { flex: 1 1 auto; min-width: 0; }
+
+.reset-field-btn {
+  display: none;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1.5px solid var(--text-faint);
+  border-radius: 6px;
+  color: var(--text-faint);
+  font-size: 14px;
+}
+.reset-field-btn.show { display: inline-flex; align-items: center; justify-content: center; }
+
+.reset-all-btn {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  background: rgba(255,92,92,0.1);
+  border: 1px solid var(--accent-alert);
+  border-radius: 8px;
+  color: var(--accent-alert);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
 /* ── Meal 2 supplement callout ─────────────────────────────────── */
 .supp-callout {
